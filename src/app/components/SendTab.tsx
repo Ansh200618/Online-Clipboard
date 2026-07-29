@@ -311,17 +311,26 @@ export function SendTab() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {files.map((f, i) => (
-                      <div key={i} onClick={(e) => e.stopPropagation()} style={{
-                        display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10,
-                        background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.14)",
-                      }}>
-                        <FileText size={15} color="#818cf8" />
-                        <span style={{ flex: 1, color: "#e2e8f0", fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
-                        <span style={{ color: "#334155", fontSize: "0.72rem" }}>{formatFileSize(f.size)}</span>
-                        <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", padding: 2 }}><X size={13} /></button>
-                      </div>
-                    ))}
+                    {files.map((f, i) => {
+                      const isImg = f.type.startsWith("image/");
+                      const isVid = f.type.startsWith("video/");
+                      const url = (isImg || isVid) ? URL.createObjectURL(f) : "";
+                      return (
+                        <div key={i} onClick={(e) => e.stopPropagation()} style={{
+                          display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10,
+                          background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.14)",
+                        }}>
+                          <div style={{ width: 36, height: 36, borderRadius: 8, overflow: "hidden", flexShrink: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {isImg ? <img src={url} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              : isVid ? <video src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted />
+                              : <FileText size={15} color="#818cf8" />}
+                          </div>
+                          <span style={{ flex: 1, color: "#e2e8f0", fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                          <span style={{ color: "#334155", fontSize: "0.72rem" }}>{formatFileSize(f.size)}</span>
+                          <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", padding: 2 }}><X size={13} /></button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

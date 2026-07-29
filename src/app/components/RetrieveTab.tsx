@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import { Search, Copy, Download, Archive, ArrowLeft, FileText, FileUp, ExternalLink } from "lucide-react";
+import { Search, Copy, Download, Archive, ArrowLeft, FileText, FileUp, ExternalLink, Eye, X, Image as ImageIcon, Film } from "lucide-react";
 import JSZip from "jszip";
-import { supabase, addToHistory } from "../../lib/supabase";
+import { supabase, addToHistory, fileKind } from "../../lib/supabase";
 
 type Stage = "input" | "loading" | "result";
 interface ClipData { code: string; content: string; type: "text" | "file"; }
@@ -27,6 +27,7 @@ export function RetrieveTab({ prefillCode }: { prefillCode?: string }) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [copied, setCopied] = useState(false);
   const [zipping, setZipping] = useState(false);
+  const [preview, setPreview] = useState<FileEntry | null>(null);
   const refs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -255,17 +256,49 @@ export function RetrieveTab({ prefillCode }: { prefillCode?: string }) {
           {result?.type === "file" && (
             <>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-                {files.map((f, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(99,102,241,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <FileUp size={16} color="#818cf8" />
+                {files.map((f, i) => {
+                  const kind = fileKind(f.name);
+                  const isImg = kind === "image";
+                  const isVid = kind === "video";
+                  const canPreview = isImg || isVid;
+                  return (
+                    <div key={i} style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 14px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(99,102,241,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
+                          {isImg ? (
+                            <img src={f.url} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                          ) : isVid ? <Film size={16} color="#818cf8" /> : <FileUp size={16} color="#818cf8" />}
+                        </div>
+                        <span style={{ flex: 1, color: "#e2e8f0", fontSize: "0.83rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                        {canPreview && (
+                          <button onClick={() => setPreview(f)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 8, background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)", color: "#c084fc", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
+                            <Eye size={12} /> View
+                          </button>
+                        )}
+                        <a href={f.url} target="_blank" rel="noreferrer" download={f.name} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", color: "#818cf8", fontSize: "0.78rem", fontWeight: 600, textDecoration: "none" }}>
+                          <Download size={12} /> Get
+                        </a>
+                      </div>
+                      {isImg && (
+                        <img
+                          src={f.url}
+                          alt={f.name}
+                          onClick={() => setPreview(f)}
+                          loading="lazy"
+                          style={{ width: "100%", maxHeight: 260, objectFit: "contain", borderRadius: 10, background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.04)", cursor: "zoom-in" }}
+                        />
+                      )}
+                      {isVid && (
+                        <video
+                          src={f.url}
+                          controls
+                          preload="metadata"
+                          style={{ width: "100%", maxHeight: 320, borderRadius: 10, background: "#000", border: "1px solid rgba(255,255,255,0.04)" }}
+                        />
+                      )}
                     </div>
-                    <span style={{ flex: 1, color: "#e2e8f0", fontSize: "0.83rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
-                    <a href={f.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", color: "#818cf8", fontSize: "0.78rem", fontWeight: 600, textDecoration: "none" }}>
-                      <Download size={12} /> Get
-                    </a>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               {files.length > 1 && (
                 <button onClick={handleZip} disabled={zipping} style={{
@@ -277,6 +310,26 @@ export function RetrieveTab({ prefillCode }: { prefillCode?: string }) {
                 }}>
                   {zipping ? <><div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", animation: "spin 0.7s linear infinite" }} />Building ZIP…</> : <><Archive size={16} />Download All as ZIP</>}
                 </button>
+              )}
+
+              {/* Lightbox */}
+              {preview && (
+                <div
+                  onClick={() => setPreview(null)}
+                  style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+                >
+                  <button onClick={() => setPreview(null)} style={{ position: "absolute", top: 20, right: 20, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <X size={18} />
+                  </button>
+                  <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+                    {fileKind(preview.name) === "image" ? (
+                      <img src={preview.url} alt={preview.name} style={{ maxWidth: "92vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 12 }} />
+                    ) : (
+                      <video src={preview.url} controls autoPlay style={{ maxWidth: "92vw", maxHeight: "80vh", borderRadius: 12, background: "#000" }} />
+                    )}
+                    <span style={{ color: "#cbd5e1", fontSize: "0.85rem", fontFamily: "'JetBrains Mono', monospace" }}>{preview.name}</span>
+                  </div>
+                </div>
               )}
             </>
           )}

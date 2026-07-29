@@ -27,17 +27,42 @@ export interface HistoryItem {
   ts: number;
 }
 
+const HISTORY_KEY = "cc_hist_v2";
+const TTL_MS = 24 * 60 * 60 * 1000;
+
+function pruneExpired(items: HistoryItem[]): HistoryItem[] {
+  const cutoff = Date.now() - TTL_MS;
+  return items.filter((h) => typeof h.ts === "number" && h.ts >= cutoff);
+}
+
 export function addToHistory(item: HistoryItem) {
-  let hist: HistoryItem[] = JSON.parse(localStorage.getItem("cc_hist_v2") || "[]");
-  hist = hist.filter((h) => !(h.code === item.code && h.action === item.action));
+  let hist: HistoryItem[] = [];
+  try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch {}
+  hist = pruneExpired(hist).filter((h) => !(h.code === item.code && h.action === item.action));
   hist.unshift(item);
-  localStorage.setItem("cc_hist_v2", JSON.stringify(hist.slice(0, 20)));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(hist.slice(0, 20)));
 }
 
 export function getHistory(): HistoryItem[] {
-  return JSON.parse(localStorage.getItem("cc_hist_v2") || "[]");
+  let hist: HistoryItem[] = [];
+  try { hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch {}
+  const pruned = pruneExpired(hist);
+  if (pruned.length !== hist.length) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(pruned));
+  }
+  return pruned;
 }
 
 export function clearHistoryStore() {
-  localStorage.removeItem("cc_hist_v2");
+  localStorage.removeItem(HISTORY_KEY);
 }
+
+// Detect image/video files so the UI can render previews.
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg|bmp|ico)$/i;
+const VIDEO_EXT = /\.(mp4|webm|mov|m4v|ogv)$/i;
+export function fileKind(name: string): "image" | "video" | "other" {
+  if (IMAGE_EXT.test(name)) return "image";
+  if (VIDEO_EXT.test(name)) return "video";
+  return "other";
+}
+

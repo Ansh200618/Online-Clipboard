@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
-import { Send, Download, Clock, Info, Zap, Shield, Timer } from "lucide-react";
+import { Send, Download, Clock, Info, Zap, Shield, Timer, Lock, Radio, Wifi, Cpu, Globe, Key } from "lucide-react";
 import { PremiumBackground } from "./components/PremiumBackground";
 import { WorkspaceCard } from "./components/WorkspaceCard";
 import { SendTab } from "./components/SendTab";
@@ -9,6 +9,15 @@ import { RetrieveTab } from "./components/RetrieveTab";
 import { HistoryTab } from "./components/HistoryTab";
 import { AboutTab } from "./components/AboutTab";
 import { Chatbot } from "./components/Chatbot";
+import { supabase } from "../lib/supabase";
+
+type ConnStatus = "checking" | "online" | "degraded" | "offline";
+const STATUS_META: Record<ConnStatus, { label: string; color: string; bg: string; border: string }> = {
+  checking: { label: "CHECKING", color: "#eab308", bg: "rgba(234,179,8,0.08)", border: "rgba(234,179,8,0.25)" },
+  online:   { label: "SECURE",   color: "#22c55e", bg: "rgba(34,197,94,0.08)", border: "rgba(34,197,94,0.2)" },
+  degraded: { label: "DEGRADED", color: "#eab308", bg: "rgba(234,179,8,0.08)", border: "rgba(234,179,8,0.25)" },
+  offline:  { label: "OFFLINE",  color: "#ef4444", bg: "rgba(239,68,68,0.08)", border: "rgba(239,68,68,0.25)" },
+};
 
 type Tab = "send" | "retrieve" | "history" | "about";
 
@@ -45,6 +54,32 @@ const HERO: Record<Tab, { eyebrow: string; title: string; sub: string }> = {
 export default function App() {
   const [tab, setTab] = useState<Tab>("send");
   const [prefill, setPrefill] = useState<string | undefined>();
+  const [status, setStatus] = useState<ConnStatus>("checking");
+
+  // Real connection health for the top status badge.
+  useEffect(() => {
+    let alive = true;
+    const check = async () => {
+      if (!navigator.onLine) { if (alive) setStatus("offline"); return; }
+      const started = performance.now();
+      try {
+        const { error } = await supabase.from("clips").select("code", { head: true, count: "exact" }).limit(1);
+        if (!alive) return;
+        if (error) { setStatus("degraded"); return; }
+        setStatus(performance.now() - started > 1500 ? "degraded" : "online");
+      } catch {
+        if (alive) setStatus("offline");
+      }
+    };
+    check();
+    const iv = window.setInterval(check, 30_000);
+    const on = () => check();
+    const off = () => setStatus("offline");
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => { alive = false; window.clearInterval(iv); window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+
 
   const handleTabChange = (t: Tab) => {
     setTab(t);
@@ -89,6 +124,8 @@ export default function App() {
       }}
     >
       <PremiumBackground />
+      <ScatteredAmbient />
+
       <Toaster
         position="top-right"
         toastOptions={{
@@ -141,13 +178,22 @@ export default function App() {
 
         {/* Status badge */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99,
-            background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.15)",
-          }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "pulse 2s infinite" }} />
-            <span style={{ color: "#22c55e", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace" }}>SECURE</span>
-          </div>
+          {(() => {
+            const s = STATUS_META[status];
+            return (
+              <div
+                title={`Connection: ${s.label.toLowerCase()}`}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 99,
+                  background: s.bg, border: `1px solid ${s.border}`,
+                  transition: "background 0.2s, border-color 0.2s",
+                }}
+              >
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: s.color, boxShadow: `0 0 6px ${s.color}`, animation: status === "checking" ? "pulse 1s infinite" : "pulse 2s infinite" }} />
+                <span style={{ color: s.color, fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.08em", fontFamily: "'JetBrains Mono', monospace" }}>{s.label}</span>
+              </div>
+            );
+          })()}
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
             <Timer size={11} color="#6366f1" />
             <span style={{ color: "#6366f1", fontSize: "0.7rem", fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>24H WIPE</span>
@@ -250,7 +296,10 @@ export default function App() {
         }}
       >
 
+
+
         <div className="w-full max-w-[660px] px-2 sm:px-4 md:px-0">
+
           <WorkspaceCard>
             {/* Tab indicator bar inside card */}
             <div
@@ -364,7 +413,213 @@ export default function App() {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
         }
+        @keyframes floatY {
+          0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+          50% { transform: translate(-50%, -50%) translateY(-14px); }
+        }
+        @keyframes floatXY {
+          0%, 100% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); }
+          25%      { transform: translate(-50%, -50%) translate(6px, -10px) rotate(3deg); }
+          50%      { transform: translate(-50%, -50%) translate(-4px, 8px) rotate(-2deg); }
+          75%      { transform: translate(-50%, -50%) translate(-8px, -6px) rotate(2deg); }
+        }
+        @keyframes spinSlow {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to   { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes drift {
+          0% { background-position: 0 0; }
+          100% { background-position: 0 40px; }
+        }
       `}</style>
     </div>
   );
 }
+
+// Scattered geometric shapes (memphis-style) across the entire background.
+// Rings, triangles, dot grids, wavy lines, small squares — no text, no icons.
+function ScatteredAmbient() {
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 640px)").matches : false
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  // Palette — significantly toned down so text stays readable over the shapes.
+  const C = {
+    violet: "rgba(139,92,246,0.32)",
+    violetSoft: "rgba(139,92,246,0.10)",
+    indigo: "rgba(99,102,241,0.30)",
+    indigoSoft: "rgba(99,102,241,0.09)",
+    cyan: "rgba(103,232,249,0.26)",
+    dot: "rgba(148,163,184,0.18)",
+    line: "rgba(148,163,184,0.22)",
+  };
+
+  type Shape =
+    | { kind: "ring"; top: string; left: string; size: number; stroke: string; sw: number; delay: number; dur: number; anim?: string }
+    | { kind: "arc"; top: string; left: string; size: number; stroke: string; sw: number; rot: number; delay: number; dur: number; anim?: string }
+    | { kind: "triangle"; top: string; left: string; size: number; fill?: string; stroke?: string; rot: number; delay: number; dur: number; anim?: string }
+    | { kind: "dots"; top: string; left: string; cols: number; rows: number; gap: number; r: number; color: string; rot: number; delay: number; dur: number; anim?: string }
+    | { kind: "wave"; top: string; left: string; w: number; h: number; stroke: string; sw: number; rot: number; delay: number; dur: number; anim?: string }
+    | { kind: "square"; top: string; left: string; size: number; stroke: string; sw: number; rot: number; delay: number; dur: number; anim?: string }
+    | { kind: "stripes"; top: string; left: string; size: number; color: string; rot: number; delay: number; dur: number; anim?: string };
+
+  const ALL: Shape[] = [
+    // Corner rings (big, quiet)
+    { kind: "ring", top: "-8%", left: "-6%",  size: 380, stroke: C.violet,  sw: 22, delay: 0,   dur: 18, anim: "floatXY" },
+    { kind: "ring", top: "108%", left: "104%", size: 420, stroke: C.violet,  sw: 24, delay: 1.5, dur: 20, anim: "floatXY" },
+    { kind: "arc",  top: "18%",  left: "92%",  size: 220, stroke: C.indigo,  sw: 14, rot: 40,  delay: 0.6, dur: 22, anim: "spinSlow" },
+    { kind: "arc",  top: "78%",  left: "6%",   size: 200, stroke: C.indigo,  sw: 12, rot: -30, delay: 1.1, dur: 26, anim: "spinSlow" },
+
+    // Small hollow rings
+    { kind: "ring", top: "22%", left: "12%",  size: 26, stroke: C.violet, sw: 2,  delay: 0.4, dur: 6, anim: "floatY" },
+    { kind: "ring", top: "62%", left: "88%",  size: 20, stroke: C.indigo, sw: 2,  delay: 1.2, dur: 7, anim: "floatY" },
+    { kind: "ring", top: "36%", left: "94%",  size: 14, stroke: C.violet, sw: 2,  delay: 0.9, dur: 5, anim: "floatXY" },
+    { kind: "ring", top: "84%", left: "40%",  size: 18, stroke: C.cyan,   sw: 2,  delay: 1.8, dur: 8, anim: "floatXY" },
+
+    // Right triangles (outline + filled soft)
+    { kind: "triangle", top: "14%", left: "22%", size: 42, stroke: C.violet, rot: -10, delay: 0.2, dur: 9, anim: "floatXY" },
+    { kind: "triangle", top: "44%", left: "82%", size: 52, fill: C.violetSoft, stroke: C.violet, rot: 25, delay: 1.3, dur: 10, anim: "floatXY" },
+    { kind: "triangle", top: "72%", left: "18%", size: 46, fill: C.indigoSoft, stroke: C.indigo, rot: -20, delay: 0.7, dur: 11, anim: "floatY" },
+    { kind: "triangle", top: "30%", left: "68%", size: 34, stroke: C.cyan,   rot: 15, delay: 1.9, dur: 8, anim: "floatXY" },
+    { kind: "triangle", top: "88%", left: "72%", size: 40, stroke: C.violet, rot: 40, delay: 0.5, dur: 12, anim: "floatY" },
+
+    // Dot grids
+    { kind: "dots", top: "10%",  left: "76%", cols: 8, rows: 4, gap: 8, r: 1.8, color: C.dot, rot: 0,  delay: 0,   dur: 14, anim: "floatY" },
+    { kind: "dots", top: "58%",  left: "14%", cols: 6, rows: 4, gap: 8, r: 1.8, color: C.dot, rot: -8, delay: 1.6, dur: 13, anim: "floatXY" },
+    { kind: "dots", top: "82%",  left: "56%", cols: 5, rows: 3, gap: 8, r: 1.6, color: C.dot, rot: 12, delay: 0.9, dur: 15, anim: "floatY" },
+
+    // Wavy lines
+    { kind: "wave", top: "6%",  left: "42%", w: 90,  h: 18, stroke: C.line, sw: 2, rot: 0,   delay: 0.3, dur: 11, anim: "floatXY" },
+    { kind: "wave", top: "50%", left: "6%",  w: 70,  h: 14, stroke: C.line, sw: 2, rot: 25,  delay: 1.1, dur: 12, anim: "floatY" },
+    { kind: "wave", top: "94%", left: "22%", w: 100, h: 18, stroke: C.line, sw: 2, rot: -10, delay: 0.7, dur: 10, anim: "floatXY" },
+    { kind: "wave", top: "40%", left: "38%", w: 60,  h: 12, stroke: C.line, sw: 2, rot: 8,   delay: 2.0, dur: 13, anim: "floatY" },
+
+    // Tilted squares (outline)
+    { kind: "square", top: "24%", left: "58%", size: 14, stroke: C.violet, sw: 1.5, rot: 20,  delay: 1.4, dur: 9, anim: "floatXY" },
+    { kind: "square", top: "66%", left: "34%", size: 12, stroke: C.indigo, sw: 1.5, rot: -15, delay: 0.6, dur: 10, anim: "floatXY" },
+
+    // Diagonal stripe blocks
+    { kind: "stripes", top: "20%", left: "8%",  size: 70, color: C.indigoSoft, rot: -20, delay: 0.4, dur: 14, anim: "floatY" },
+    { kind: "stripes", top: "76%", left: "84%", size: 80, color: C.violetSoft, rot: 30,  delay: 1.5, dur: 15, anim: "floatY" },
+  ];
+
+  // On mobile, keep only a small edge/corner-biased subset so the UI stays clean.
+  const MOBILE_KEEP = new Set<number>([0, 1, 2, 3, 6, 15, 19, 22]);
+  const SHAPES = isMobile ? ALL.filter((_, i) => MOBILE_KEEP.has(i)) : ALL;
+
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+        overflow: "hidden",
+      }}
+    >
+      {SHAPES.map((s, i) => {
+        const anim = s.anim ?? "floatY";
+        const wrapperStyle: React.CSSProperties = {
+          position: "absolute",
+          top: s.top,
+          left: s.left,
+          transform: "translate(-50%, -50%)",
+          animation: `${anim} ${s.dur}s ease-in-out ${s.delay}s infinite`,
+          willChange: "transform",
+          opacity: 0.85,
+        };
+        const rotStyle = (deg: number): React.CSSProperties => ({
+          transform: `rotate(${deg}deg)`,
+          transformOrigin: "center",
+          display: "block",
+        });
+
+        let inner: React.ReactNode = null;
+        if (s.kind === "ring") {
+          inner = (
+            <svg width={s.size} height={s.size} style={{ display: "block" }}>
+              <circle cx={s.size / 2} cy={s.size / 2} r={s.size / 2 - s.sw / 2} fill="none" stroke={s.stroke} strokeWidth={s.sw} />
+            </svg>
+          );
+        } else if (s.kind === "arc") {
+          const r = s.size / 2 - s.sw / 2;
+          const cx = s.size / 2, cy = s.size / 2;
+          const rad = (deg: number) => (deg * Math.PI) / 180;
+          const x1 = cx + r * Math.cos(rad(0)), y1 = cy + r * Math.sin(rad(0));
+          const x2 = cx + r * Math.cos(rad(270)), y2 = cy + r * Math.sin(rad(270));
+          inner = (
+            <svg width={s.size} height={s.size} style={rotStyle(s.rot)}>
+              <path d={`M ${x1} ${y1} A ${r} ${r} 0 1 1 ${x2} ${y2}`} fill="none" stroke={s.stroke} strokeWidth={s.sw} strokeLinecap="round" />
+            </svg>
+          );
+        } else if (s.kind === "triangle") {
+          const pts = `0,${s.size} ${s.size},${s.size} 0,0`;
+          inner = (
+            <svg width={s.size} height={s.size} style={rotStyle(s.rot)}>
+              <polygon points={pts} fill={s.fill ?? "none"} stroke={s.stroke ?? "none"} strokeWidth={1.5} strokeLinejoin="round" />
+            </svg>
+          );
+        } else if (s.kind === "dots") {
+          const w = s.cols * s.gap, h = s.rows * s.gap;
+          const circles = [];
+          for (let y = 0; y < s.rows; y++)
+            for (let x = 0; x < s.cols; x++)
+              circles.push(<circle key={`${x}-${y}`} cx={x * s.gap + s.gap / 2} cy={y * s.gap + s.gap / 2} r={s.r} fill={s.color} />);
+          inner = (
+            <svg width={w} height={h} style={rotStyle(s.rot)}>
+              {circles}
+            </svg>
+          );
+        } else if (s.kind === "wave") {
+          const midY = s.h / 2;
+          const d = `M 0 ${midY} Q ${s.w * 0.25} 0, ${s.w * 0.5} ${midY} T ${s.w} ${midY}`;
+          inner = (
+            <svg width={s.w} height={s.h} style={rotStyle(s.rot)}>
+              <path d={d} fill="none" stroke={s.stroke} strokeWidth={s.sw} strokeLinecap="round" />
+            </svg>
+          );
+        } else if (s.kind === "square") {
+          inner = (
+            <svg width={s.size} height={s.size} style={rotStyle(s.rot)}>
+              <rect x={s.sw / 2} y={s.sw / 2} width={s.size - s.sw} height={s.size - s.sw} fill="none" stroke={s.stroke} strokeWidth={s.sw} />
+            </svg>
+          );
+        } else {
+          // stripes
+          const lines = [];
+          const step = 6;
+          for (let x = -s.size; x < s.size * 2; x += step) {
+            lines.push(<line key={x} x1={x} y1={s.size} x2={x + s.size} y2={0} stroke={s.color} strokeWidth={2} />);
+          }
+          inner = (
+            <svg width={s.size} height={s.size} viewBox={`0 0 ${s.size} ${s.size}`} style={{ ...rotStyle(s.rot), overflow: "hidden" }}>
+              <defs>
+                <clipPath id={`clip-${i}`}>
+                  <rect width={s.size} height={s.size} rx={4} />
+                </clipPath>
+              </defs>
+              <g clipPath={`url(#clip-${i})`}>{lines}</g>
+            </svg>
+          );
+        }
+
+        return (
+          <div key={i} style={wrapperStyle}>
+            {inner}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+

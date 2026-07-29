@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Zap, Shield, Smartphone, Globe, Briefcase, Linkedin, Instagram, Github, ChevronDown } from "lucide-react";
+import { Zap, Shield, Globe, Briefcase, Linkedin, Instagram, Github, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 const features = [
@@ -15,7 +15,7 @@ const faq = [
 ];
 
 const links = [
-  { icon: Briefcase, label: "Portfolio", href: "https://anshcreates.vercel.app/" },
+  { icon: Briefcase, label: "Portfolio", href: "https://anshdeepofficial.vercel.app/" },
   { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/itsanshdeepofficial/" },
   { icon: Instagram, label: "Instagram", href: "https://www.instagram.com/anshdeep_officiall/" },
   { icon: Github, label: "GitHub", href: "https://github.com/anshdeepofficial/" },
@@ -109,19 +109,6 @@ export function AboutTab() {
         </div>
       </div>
 
-      {/* APK */}
-      <a href="https://github.com/Ansh200618/Copy-Cloud/releases/latest" target="_blank" rel="noreferrer" style={{
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 10, width: "100%", padding: "14px 0", borderRadius: 14,
-        background: "linear-gradient(135deg, #6366f1, #a855f7)", color: "#fff", textDecoration: "none",
-        fontSize: "0.9rem", fontWeight: 700, fontFamily: "'Inter', sans-serif",
-        boxShadow: "0 8px 24px rgba(99,102,241,0.3)", marginBottom: 16,
-        transition: "all 0.2s",
-      }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 16px 40px rgba(99,102,241,0.45)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 8px 24px rgba(99,102,241,0.3)"; }}
-      >
-        <Smartphone size={17} /> Get Android App (.APK)
-      </a>
 
       <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.72rem", lineHeight: 1.7, borderTop: "1px solid rgba(255,255,255,0.03)", paddingTop: 12 }}>
         <p>copycloud.me@outlook.com · Punjab, India</p>
