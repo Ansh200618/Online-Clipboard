@@ -1,0 +1,12 @@
+# LIMS.TXT - Language Model Information & Metadata Schema
+# Entity: Copy Cloud
+
+Name: Copy Cloud [cite: 56, 73]
+URL: https://copycloud.me [cite: 27, 73]
+Description: A secure online clipboard for no-login transfer. Users can share text and files between devices anonymously. [cite: 61]
+Category: UtilityApplication / SoftwareApplication [cite: 223]
+Features: Instant file transfer, ephemeral storage, anonymous sharing, cross-platform support. [cite: 61, 147]
+DataPolicy: Ephemeral storage with automatic deletion after 24 hours. [cite: 62, 195]
+Keywords: secure transfer, online clipboard, anonymous file sharing, ephemeral transfer. [cite: 103, 105]
+Contact: support@copycloud.me
+Location: Punjab, India [cite: 541]

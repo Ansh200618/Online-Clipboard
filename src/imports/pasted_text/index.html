@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+<!-- SEO & Identity -->
+<title>Copy Cloud - Secure Online Clipboard & Instant File Transfer</title>
+<meta name="description" content="Securely share text and files between devices with Copy Cloud. An online clipboard that auto-deletes data after 24 hours. No login required.">
+<meta name="theme-color" content="#09090b">
+<meta name="keywords" content="online clipboard, secure transfer, anonymous file sharing, ephemeral transfer, instant copy paste, encrypted sharing, Copy Cloud, send text to phone, share files anonymously">
+<link rel="canonical" href="https://copycloud.me/" />
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-45C4NL9DG8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-45C4NL9DG8');
+</script>
+
+<!-- SoftwareApplication Schema -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Copy Cloud",
+  "operatingSystem": "All",
+  "applicationCategory": "UtilityApplication",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<!-- Open Graph / Twitter -->
+<meta property="og:site_name" content="Copy Cloud">
+<meta property="og:title" content="Copy Cloud - Secure Online Clipboard">
+<meta property="og:description" content="Instantly share text and files between devices without logging in.">
+<meta property="og:image" content="https://copycloud.me/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<!-- Dependencies -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<style>
+/* --- Core Variables & Reset --- */
+:root {
+    --bg-base: #09090b;
+    --bg-panel: rgba(24, 24, 27, 0.6);
+    --bg-input: rgba(0, 0, 0, 0.3);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-border-hover: rgba(255, 255, 255, 0.15);
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    --accent-primary: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    
+    --radius-sm: 12px;
+    --radius-md: 20px;
+    --radius-lg: 32px;
+    
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+button, input, textarea { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* --- CSS Icons Sizes --- */
+.segment-btn i { width: 18px; height: 18px; }
+.action-btn i { width: 14px; height: 14px; }
+.feature-icon-box i { width: 24px; height: 24px; }
+.social-link i { width: 18px; height: 18px; }
+.coming-soon-list i { width: 14px; height: 14px; }
+.tool-icon { width: 20px; height: 20px; }
+.lucide-bot { width: 18px; color: var(--accent-primary); }
+
+/* --- Ambient Aurora Background --- */
+.aurora-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    background: #09090b;
+}
+.blob-wrapper {
+    position: absolute;
+    width: 100%; height: 100%;
+    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.aurora-blob {
+    position: absolute;
+    filter: blur(90px);
+    opacity: 0.5;
+    border-radius: 50%;
+    animation: float 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+.blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: rgba(99, 102, 241, 0.4); }
+.blob-2 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: rgba(168, 85, 247, 0.2); animation-delay: -10s; }
+
+@keyframes float {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(10%, 10%) scale(1.1); }
+}
+
+/* --- Layout Structure --- */
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px;
+    gap: 24px;
+}
+
+.left-pane {
+    flex: 0.8;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.0) 100%);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    
+    /* STICKY SIDEBAR LOGIC */
+    position: sticky;
+    top: 24px;
+    height: calc(100vh - 48px);
+}
+
+.brand-header { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 24px; letter-spacing: -0.04em; cursor: pointer; }
+.brand-logo-img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; }
+
+.hero-text { margin-top: auto; margin-bottom: 48px; }
+.hero-text h1 { font-size: clamp(40px, 5vw, 64px); line-height: 1.1; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 16px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-text p { font-size: 18px; color: var(--text-muted); line-height: 1.5; max-width: 400px; }
+
+.right-pane {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    box-shadow: var(--shadow-glass);
+    overflow: hidden;
+    position: relative;
+}
+
+.nav-segments {
+    display: flex;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+    gap: 8px;
+    background: rgba(0,0,0,0.2);
+}
+.segment-btn {
+    flex: 1; padding: 12px 0; border-radius: 99px;
+    background: transparent; border: 1px solid transparent; color: var(--text-muted);
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.segment-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+.segment-btn.active { background: rgba(255,255,255,0.1); border-color: var(--glass-border); color: var(--text-main); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+.workspace-content {
+    padding: 40px;
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+}
+
+.tab-pane { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.tab-pane.active { display: block; }
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pane-header { margin-bottom: 32px; }
+.pane-header h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+.pane-header p { color: var(--text-muted); font-size: 15px; }
+
+.input-group { margin-bottom: 24px; }
+
+.type-toggle { display: inline-flex; background: var(--bg-input); border: 1px solid var(--glass-border); border-radius: 99px; padding: 4px; margin-bottom: 20px; }
+.type-toggle button { background: transparent; border: none; color: var(--text-muted); padding: 8px 24px; border-radius: 99px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.type-toggle button.active { background: var(--accent-gradient); color: white; box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4); }
+
+.glass-input {
+    width: 100%; background: var(--bg-input); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm); padding: 20px; color: var(--text-main);
+    font-size: 15px; transition: border 0.3s, box-shadow 0.3s, background 0.3s;
+    font-family: 'Inter', sans-serif;
+}
+.glass-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15); }
+
+.text-area-wrapper { 
+    position: relative; width: 100%; 
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 2px 15px rgba(0,0,0,0.2);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+.text-area-wrapper:focus-within {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--accent-primary);
+    box-shadow: inset 0 2px 20px rgba(0,0,0,0.4), 0 0 0 4px rgba(99, 102, 241, 0.15);
+}
+textarea.glass-input { 
+    min-height: 240px; resize: vertical; 
+    background: transparent; border: none; box-shadow: none;
+    line-height: 1.6; padding: 20px; padding-bottom: 48px;
+    font-size: 15px; color: var(--text-main);
+}
+textarea.glass-input:focus {
+    background: transparent; border: none; box-shadow: none;
+}
+textarea.glass-input::placeholder { color: rgba(255,255,255,0.25); font-weight: 400; font-style: italic; }
+
+.text-actions-top {
+    display: flex; gap: 8px; justify-content: flex-end; align-items: center;
+    padding: 12px 16px; 
+    background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.05) 100%);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+}
+.text-actions-top::before {
+    content: '✍️ Secure Text Editor';
+    margin-right: auto;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+.action-btn {
+    background: rgba(0, 0, 0, 0.3); border: 1px solid var(--glass-border);
+    color: var(--text-muted); padding: 8px 14px; border-radius: 99px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.3s ease; font-size: 12px; font-weight: 600; font-family: inherit;
+}
+.action-btn:hover { 
+    background: var(--accent-gradient); color: white; 
+    border-color: transparent; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); 
+    transform: translateY(-1px); 
+}
+.text-counter {
+    position: absolute; bottom: 12px; right: 16px; font-size: 11px;
+    color: rgba(255,255,255,0.5); pointer-events: none; font-variant-numeric: tabular-nums;
+    font-weight: 600; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(4px);
+}
+
+.markdown-body { 
+    line-height: 1.6; color: var(--text-main); overflow-y: auto; max-height: 500px;
+    padding: 24px; text-align: left;
+}
+.markdown-body pre { 
+    position: relative; background: #1e1e24; padding: 16px; padding-top: 40px; 
+    border-radius: 8px; margin: 16px 0; overflow-x: auto; border: 1px solid var(--glass-border); 
+}
+
+.code-input {
+    font-family: 'JetBrains Mono', monospace; font-size: 32px; text-align: center;
+    letter-spacing: 0.3em; text-transform: uppercase; font-weight: 700; height: 80px;
+}
+
+.drop-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.0) 100%);
+    border-radius: var(--radius-md); padding: 60px 20px; text-align: center;
+    cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 240px; position: relative; overflow: hidden;
+}
+.drop-zone i { color: var(--accent-primary); margin-bottom: 20px; width: 48px; height: 48px; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.btn-primary {
+    width: 100%; background: var(--accent-gradient); color: white;
+    border: none; padding: 18px 24px; border-radius: var(--radius-sm);
+    font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25); letter-spacing: 0.02em;
+}
+.btn-primary:hover {
+    transform: translateY(-2px); box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4); filter: brightness(1.1);
+}
+.btn-secondary {
+    background: var(--bg-input); color: var(--text-main); border: 1px solid var(--glass-border);
+    padding: 12px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: var(--accent-primary); }
+
+.success-container { text-align: center; padding: 20px 0; }
+.big-code-display {
+    font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 800;
+    letter-spacing: 0.15em; margin: 24px 0; background: var(--accent-gradient);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; user-select: all;
+}
+.qr-wrapper {
+    display: inline-flex; padding: 16px; background: white; border-radius: var(--radius-md);
+    margin-bottom: 32px; box-shadow: 0 12px 40px rgba(0,0,0,0.37); position: relative;
+}
+.qr-wrapper canvas { border-radius: 8px; }
+
+.history-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.history-item {
+    background: var(--bg-input); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm); padding: 16px; display: flex; justify-content: space-between;
+    align-items: center; cursor: pointer; transition: 0.2s;
+}
+.history-item:hover { border-color: var(--accent-primary); background: rgba(255,255,255,0.03); }
+
+.toast {
+    position: fixed; top: 24px; right: 24px; background: rgba(24, 24, 27, 0.9);
+    border: 1px solid var(--glass-border); backdrop-filter: blur(10px);
+    padding: 16px 24px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 12px; transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.toast.show { transform: translateX(0); }
+
+.idle-state-box {
+    text-align: center; padding: 60px 20px; border: 1px dashed var(--glass-border);
+    border-radius: var(--radius-md); margin-top: 32px; background: rgba(0,0,0,0.2);
+}
+.file-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.file-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm); background: rgba(255,255,255,0.03);
+}
+
+.feature-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 32px; }
+.feature-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.0) 100%);
+    border: 1px solid var(--glass-border); padding: 24px; border-radius: var(--radius-sm);
+    display: flex; align-items: flex-start; gap: 16px; transition: all 0.3s ease;
+}
+.feature-icon-box {
+    background: rgba(99, 102, 241, 0.1); color: var(--accent-primary);
+    width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.feature-text h3 { color: var(--text-main); font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.feature-text p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+
+/* --- Organized Links Section --- */
+.links-section {
+    margin-top: 40px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+}
+.links-header {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.about-links-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px; 
+}
+.social-link {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+    padding: 16px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; color: var(--text-muted);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.social-link i { width: 18px; height: 18px; color: var(--accent-primary); flex-shrink: 0; }
+.social-link:hover { 
+    transform: translateY(-3px); 
+    background: rgba(99, 102, 241, 0.08); 
+    border-color: var(--accent-primary); 
+    color: var(--text-main); 
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.apk-download-btn {
+    width: 100%;
+    margin-top: 24px;
+    background: var(--accent-gradient);
+    color: white;
+    padding: 20px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.4);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+.apk-download-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 15px 40px -10px rgba(99, 102, 241, 0.6);
+}
+
+.faq-section { margin-top: 40px; border-top: 1px solid var(--glass-border); padding-top: 32px; }
+.faq-item { margin-bottom: 28px; }
+.faq-item h4 { color: var(--text-main); font-size: 15px; margin-bottom: 10px; font-weight: 700; }
+.faq-item p { color: var(--text-muted); font-size: 14px; line-height: 1.7; }
+
+.footer-trust { margin-top: 48px; border-top: 1px solid var(--glass-border); padding-top: 24px; text-align: center; font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+/* --- AI Chatbot Elements --- */
+#chatbot-container {
+    position: fixed; bottom: 24px; right: 24px; z-index: 10000;
+    display: flex; flex-direction: column; align-items: flex-end;
+    font-family: 'Inter', sans-serif;
+}
+#chat-bubble {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--accent-gradient); color: white;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 8px 32px rgba(99, 102, 241, 0.5);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#chat-bubble:hover { transform: scale(1.1); }
+#chat-bubble i { width: 28px; height: 28px; }
+
+#chat-window {
+    width: 360px; height: 500px;
+    background: #0d0d12; border: 1px solid var(--glass-border);
+    border-radius: 24px; margin-bottom: 16px; overflow: hidden;
+    display: none; flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+    backdrop-filter: blur(20px); animation: chatSlide 0.3s ease;
+}
+#chat-header {
+    padding: 16px 20px; background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+#chat-messages {
+    flex: 1; padding: 20px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.chat-msg {
+    max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5;
+}
+.msg-ai { background: rgba(255,255,255,0.05); color: var(--text-main); align-self: flex-start; border-bottom-left-radius: 4px; }
+.msg-user { background: var(--accent-gradient); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+
+.quick-actions {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px;
+}
+.quick-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--text-muted);
+    cursor: pointer; transition: 0.2s;
+}
+.quick-btn:hover { border-color: var(--accent-primary); color: white; background: rgba(255,255,255,0.1); }
+
+#chat-input-area {
+    padding: 16px; border-top: 1px solid var(--glass-border);
+    display: flex; gap: 8px; background: rgba(0,0,0,0.2);
+}
+#chat-input {
+    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+    border-radius: 12px; padding: 10px 14px; color: white; font-size: 14px; outline: none;
+}
+
+.about-branding { text-align: center; margin-bottom: 32px; }
+.about-branding img { width: 64px; height: 64px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+@media (max-width: 1024px) {
+    .app-container { flex-direction: column; padding: 16px; gap: 16px; }
+    .left-pane { 
+        flex: none; border-radius: var(--radius-md); padding: 24px; min-height: 250px; 
+        position: relative; top: 0; height: auto;
+    }
+    .right-pane { flex: 1; border-radius: var(--radius-md); min-height: 600px; }
+    #chat-window { width: calc(100vw - 48px); right: 0; }
+    .about-links-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="aurora-bg">
+    <div class="blob-wrapper" id="blob-wrap">
+        <div class="aurora-blob blob-1"></div>
+        <div class="aurora-blob blob-2.0"></div>
+        <div class="aurora-blob blob-3"></div>
+    </div>
+</div>
+
+<div class="app-container">
+    <div class="left-pane">
+        <div class="brand-header" onclick="switchTab('send')">
+            <img src="https://copycloud.me/logo.png" alt="Copy Cloud Logo" class="brand-logo-img" width="34" height="34" loading="lazy">
+            Copy Cloud
+        </div>
+        
+        <div class="hero-text">
+            <h1 id="hero-title">Secure Online Clipboard & File Transfer.</h1>
+            <p id="hero-subtitle">The frictionless way to move text and files across devices anonymously with Copy Cloud.</p>
+        </div>
+    </div>
+
+    <div class="right-pane">
+        <div class="nav-segments">
+            <button class="segment-btn active" onclick="switchTab('send')" id="tab-btn-send" aria-label="Send Tab">
+                <i data-lucide="send"></i> Send
+            </button>
+            <button class="segment-btn" onclick="switchTab('retrieve')" id="tab-btn-retrieve" aria-label="Retrieve Tab">
+                <i data-lucide="download"></i> Retrieve
+            </button>
+            <button class="segment-btn" onclick="switchTab('history')" id="tab-btn-history" aria-label="History Tab">
+                <i data-lucide="clock"></i> History
+            </button>
+            <button class="segment-btn" onclick="switchTab('about')" id="tab-btn-about" aria-label="About Tab">
+                <i data-lucide="info"></i> About
+            </button>
+        </div>
+
+        <div class="workspace-content">
+            <!-- SEND TAB -->
+            <div id="pane-send" class="tab-pane active">
+                <div id="send-entry">
+                    <div class="pane-header">
+                        <h2>Instant Secure Transfer</h2>
+                        <p>Upload files or paste text. Our secure workspace auto-deletes everything in 24 hours.</p>
+                    </div>
+                    <div class="type-toggle">
+                        <button class="active" id="toggle-text" onclick="setSendType('text')">Share Text</button>
+                        <button id="toggle-file" onclick="setSendType('file')">Send Files</button>
+                    </div>
+                    <div class="input-group" id="group-text">
+                        <div class="text-area-wrapper">
+                            <div class="text-actions-top">
+                                <button class="action-btn" onclick="pasteText()" title="Paste from Clipboard"><i data-lucide="clipboard"></i> Paste Snippet</button>
+                                <button class="action-btn" onclick="clearText()" title="Clear Text"><i data-lucide="trash-2"></i> Clear</button>
+                            </div>
+                            <textarea id="text-input" class="glass-input" placeholder="Type or paste your text here..." oninput="updateWordCount()"></textarea>
+                            <div class="text-counter" id="text-counter">0 words | 0 chars</div>
+                        </div>
+                    </div>
+                    <div class="input-group" id="group-file" style="display: none;">
+                        <input type="file" id="file-upload" multiple hidden onchange="handleFileSelect(event)">
+                        <label class="drop-zone" id="drop-zone">
+                            <div id="drop-unselected">
+                                <i data-lucide="folder-up"></i>
+                                <p>Drag & drop files or click to browse</p>
+                                <small>Safe anonymous file sharing up to 40MB.</small>
+                            </div>
+                            <div id="drop-selected" style="display: none;">
+                                <i data-lucide="check-circle" style="color: #10b981;"></i>
+                                <p><strong id="file-count">0</strong> files ready</p>
+                                <small id="file-size-total">0 MB</small>
+                                <div style="margin-top: 16px;">
+                                    <button type="button" class="btn-secondary" onclick="clearFiles(event)" style="padding: 8px 16px; font-size: 12px;">Clear Selection</button>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    <button class="btn-primary" id="btn-send" onclick="handleSend()"><i data-lucide="zap"></i> Generate Secure Transfer Code</button>
+                </div>
+                <div id="send-success" class="success-container" style="display: none;">
+                    <h2>Transfer Code Generated</h2>
+                    <div class="big-code-display" id="generated-code">------</div>
+                    <div class="qr-wrapper" id="qrcode-container"></div>
+                    <div style="display: flex; gap: 16px; margin-top: 16px;">
+                        <button class="btn-secondary" style="flex:1;" onclick="copyCode()"><i data-lucide="copy"></i> Copy Link</button>
+                        <button class="btn-primary" style="flex:1;" onclick="resetSend()">New Transfer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RETRIEVE TAB -->
+            <div id="pane-retrieve" class="tab-pane">
+                <div id="retrieve-entry">
+                    <div class="pane-header">
+                        <h2>Retrieve Shared Content</h2>
+                        <p>Enter your unique 6-digit secure code to instantly decrypt and download files.</p>
+                    </div>
+                    <div class="input-group" style="margin-top: 40px;">
+                        <input type="text" id="retrieve-code-input" class="glass-input code-input" placeholder="------" maxlength="6">
+                    </div>
+                    <button class="btn-primary" id="btn-retrieve" onclick="initRetrieve()"><i data-lucide="search"></i> Search Secure Cloud</button>
+                    <div id="retrieve-idle" class="idle-state-box">
+                        <i data-lucide="cloud-download"></i>
+                        <h3 style="font-weight: 600; margin-bottom: 8px;">Waiting for Code...</h3>
+                        <p style="color: var(--text-muted); font-size: 14px;">Enter the code from your other device to access shared data instantly.</p>
+                    </div>
+                </div>
+                <div id="retrieve-result" style="display: none; margin-top: 32px;">
+                    <div class="pane-header" style="margin-bottom: 24px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h2 style="font-size: 20px;">Data Found</h2>
+                            <span id="res-type" style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--accent-primary);">Text Snippet</span>
+                        </div>
+                    </div>
+                    <div id="res-text-container" style="display:none;">
+                        <div id="res-md" class="glass-input markdown-body" style="background: rgba(0,0,0,0.4); min-height:100px;"></div>
+                        <button class="btn-primary" style="margin-top: 16px;" onclick="copyRetrievedText()"><i data-lucide="copy"></i> Copy All Text</button>
+                    </div>
+                    <div id="res-file-container" style="display:none;">
+                        <div id="res-files" class="file-list"></div>
+                        <button id="btn-dl-all" class="btn-primary" style="margin-top: 24px;"><i data-lucide="archive"></i> Download All as ZIP</button>
+                    </div>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 16px;" onclick="resetRetrieve()">Back to Search</button>
+                </div>
+            </div>
+
+            <!-- HISTORY TAB -->
+            <div id="pane-history" class="tab-pane">
+                <div class="pane-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div><h2>Local History</h2><p>Recent activity on this device. Cloud data is wiped after 24h.</p></div>
+                    <button class="btn-secondary" onclick="clearHistory()" id="btn-clear-hist">Clear All</button>
+                </div>
+                <div id="history-empty" class="idle-state-box">
+                    <i data-lucide="inbox"></i><h3 style="font-weight: 600; margin-bottom: 8px;">No history yet</h3>
+                    <p style="color: var(--text-muted); font-size: 14px;">Your recent sends and retrievals will appear here.</p>
+                </div>
+                <div id="history-list" class="history-list"></div>
+            </div>
+
+            <!-- ABOUT TAB -->
+            <div id="pane-about" class="tab-pane">
+                <div class="about-branding">
+                    <img src="https://copycloud.me/logo.png" alt="Copy Cloud Logo" width="64" height="64" loading="lazy">
+                    <h2>Copy Cloud</h2>
+                    <p style="color: var(--text-muted);">Version 3.0 • Secure Transfer Workspace</p>
+                </div>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon-box"><i data-lucide="zap"></i></div>
+                        <div class="feature-text">
+                            <h3>Instant PC to Phone Sharing</h3>
+                            <p>Share clipboard text or bulky files across any device instantly. No accounts, no emails, no friction. Copy Cloud is designed to bridge the gap between your desktop and mobile devices without requiring third-party messaging apps or native installations.</p>
+                        </div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon-box"><i data-lucide="shield"></i></div>
+                        <div class="feature-text">
+                            <h3>Encrypted & Anonymous Architecture</h3>
+                            <p>We prioritize your absolute privacy. All data transfers are handled through secure encrypted channels and deleted permanently from the cloud after 24 hours. Unlike traditional cloud storage, we provide a true ephemeral experience.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-section">
+                    <h3>Deep Dive: Workflow</h3>
+                    <div class="faq-item">
+                        <h4>Frictionless Multi-Device Workflow</h4>
+                        <p>Imagine you have a long URL or a piece of code on your Windows laptop that you need on your iPhone. Instead of emailing yourself or logging into a chat app, you simply open CopyCloud.me, paste, and type the 6-digit code on your phone. This workflow reduces a 3-minute task to 10 seconds. It works perfectly across macOS, Linux, Android, iOS, and all modern web browsers.</p>
+                    </div>
+                </div>
+
+                <!-- ENHANCED LINKS & DOWNLOAD SECTION -->
+                <div class="links-section">
+                    <div class="links-header">
+                        <i data-lucide="globe"></i> Connect & Explore
+                    </div>
+                    <div class="about-links-grid">
+                        <a href="http://ansh200618.github.io/Portfolio/" target="_blank" class="social-link">
+                            <i data-lucide="briefcase"></i> 
+                            <span>Portfolio</span>
+                        </a>
+                        <a href="https://www.linkedin.com/in/anshdeep-singh-editor" target="_blank" class="social-link">
+                            <i data-lucide="linkedin"></i> 
+                            <span>LinkedIn</span>
+                        </a>
+                        <a href="https://www.instagram.com/anshdeep_officiall/" target="_blank" class="social-link">
+                            <i data-lucide="instagram"></i> 
+                            <span>Instagram</span>
+                        </a>
+                        <a href="https://github.com/Ansh200618/Online-Clipboard" target="_blank" class="social-link">
+                            <i data-lucide="github"></i> 
+                            <span>Source Code</span>
+                        </a>
+                    </div>
+
+                    <a href="https://github.com/Ansh200618/Copy-Cloud/releases/latest" target="_blank" class="apk-download-btn">
+                        <i data-lucide="smartphone"></i>
+                        Get the Android App (.APK)
+                    </a>
+                </div>
+
+                <div class="footer-trust">
+                    <p>Made in India • Privacy Policy • Terms of Service</p>
+                    <p>© 2026 Copy Cloud Ephemeral Transfer Systems. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CHATBOT UI -->
+<div id="chatbot-container">
+    <div id="chat-window">
+        <div id="chat-header">
+            <span style="font-weight:700; display:flex; align-items:center; gap:8px; font-size:14px;"><i data-lucide="bot" class="lucide-bot"></i> Support Assistant</span>
+            <button onclick="toggleChat()" class="chat-close-btn" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i data-lucide="x"></i></button>
+        </div>
+        <div id="chat-messages">
+            <div class="chat-msg msg-ai">
+                Hi! I'm the Copy Cloud Assistant. How can I help you today?
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="askQuick('how')">How it works?</button>
+                    <button class="quick-btn" onclick="askQuick('security')">Is it secure?</button>
+                    <button class="quick-btn" onclick="askQuick('limits')">File limits?</button>
+                    <button class="quick-btn" onclick="askQuick('other')">Other tools?</button>
+                    <button class="quick-btn" onclick="askQuick('roadmap')">Roadmap?</button>
+                </div>
+            </div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()" class="chat-send-btn" style="background:var(--accent-gradient); border:none; width:36px; height:36px; border-radius:10px; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i data-lucide="send"></i></button>
+        </div>
+    </div>
+    <div id="chat-bubble" onclick="toggleChat()" aria-label="Open AI Support"><i data-lucide="message-square"></i></div>
+</div>
+
+<div id="toast" class="toast"><i data-lucide="info"></i><span id="toast-msg">Message</span></div>
+
+<!-- HIDDEN BACKLINKS FOR SEO (NOT SHOWN IN UI) -->
+<footer style="display:none; visibility:hidden; height:0; width:0; overflow:hidden;">
+    <a href="https://mmwatches.co.uk/b4b6f4d1325a3d6cffff660064835940-listing">MM Watches UK Listing</a>
+    <a href="https://sport-life.club/92de75e05448c471858ffffa06088ec9/">Sport Life Club</a>
+    <a href="https://kgzxkf.com/92de75e05448c471858ffffa06088ec9/">KGZXKF Authority</a>
+    <a href="https://dsnylu.com/92de75e05448c471858ffffa06088ec9/">Dsnyly Tech</a>
+    <a href="https://obmain.com/92de75e05448c471858ffffa06088ec9/">OBMain Hub</a>
+    <a href="https://hzdlpq.com/92de75e05448c471858ffffa06088ec9/">HZDLPQ Tools</a>
+    <a href="https://sitescooponline.com/92de75e05448c471858ffffa06088ec9/">Site Scoop Online</a>
+    <a href="https://nettools.guru/92de75e05448c471858ffffa06088ec9/">Net Tools Guru</a>
+    <a href="https://qa-animals.info/id-89021eba305bc42e49966270523eafb6-list.html">QA Animals Information</a>
+    <a href="https://great-choice-for-pbn-domains.co.uk/e4ad42a0eaacSaae2dcaa1df5fd3b3a0-str">Great Choice for PBN Domains</a>
+</footer>
+
+<script>
+const SB_URL = 'https://luunzeonlmzvmewaucqj.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dW56ZW9ubG16dm1ld2F1Y3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMzAyNzEsImV4cCI6MjA4NTcwNjI3MX0.qQpWEGFLg6Weof0NO_ApntTrGGYVsrsNB2zaujRMuFY';
+const db = window.supabase.createClient(SB_URL, SB_KEY);
+
+// --- Audio Controller ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function initAudio() { if(!audioCtx) audioCtx = new AudioContext(); if(audioCtx.state === 'suspended') audioCtx.resume(); }
+
+function playPopSound() {
+    try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    } catch(e){}
+}
+
+function playSuccessSound() {
+    try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    } catch(e){}
+}
+
+document.body.addEventListener('click', () => { if(!audioCtx) initAudio(); }, {once:true});
+
+lucide.createIcons();
+
+let selectedFiles = [];
+let currentRetrievedData = null;
+
+function switchTab(tabId) {
+    // Sound is triggered here on every tab switch
+    playPopSound(); 
+    document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+    document.getElementById(`pane-${tabId}`).classList.add('active');
+    
+    // Re-initialize icons for newly displayed tab content
+    lucide.createIcons();
+    
+    if(tabId === 'history') renderHistory();
+}
+
+function setSendType(type) {
+    document.getElementById('toggle-text').classList.toggle('active', type === 'text');
+    document.getElementById('toggle-file').classList.toggle('active', type === 'file');
+    document.getElementById('group-text').style.display = type === 'text' ? 'block' : 'none';
+    document.getElementById('group-file').style.display = type === 'file' ? 'block' : 'none';
+    lucide.createIcons();
+}
+
+function updateWordCount() {
+    const text = document.getElementById('text-input').value;
+    const chars = text.length;
+    const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    document.getElementById('text-counter').textContent = `${words} words | ${chars} chars`;
+}
+
+function pasteText() {
+    navigator.clipboard.readText().then(text => {
+        document.getElementById('text-input').value += text;
+        updateWordCount();
+    }).catch(() => showToast("Paste blocked. Use Ctrl+V.", "error"));
+}
+
+function clearText() {
+    document.getElementById('text-input').value = '';
+    updateWordCount();
+}
+
+function handleFileSelect(e) {
+    const files = Array.from(e.target.files || e.dataTransfer.files);
+    if(!files.length) return;
+    selectedFiles = files;
+    const totalSize = files.reduce((acc, f) => acc + f.size, 0);
+    document.getElementById('drop-unselected').style.display = 'none';
+    document.getElementById('drop-selected').style.display = 'block';
+    document.getElementById('file-count').textContent = files.length;
+    document.getElementById('file-size-total').textContent = (totalSize / (1024*1024)).toFixed(2) + " MB";
+    lucide.createIcons();
+}
+
+function clearFiles(e) {
+    e.stopPropagation();
+    selectedFiles = [];
+    document.getElementById('drop-unselected').style.display = 'block';
+    document.getElementById('drop-selected').style.display = 'none';
+    lucide.createIcons();
+}
+
+async function handleSend() {
+    const textVal = document.getElementById('text-input').value;
+    const isText = document.getElementById('group-text').style.display !== 'none';
+    if (isText && !textVal.trim()) return showToast("Enter text", "error");
+    if (!isText && !selectedFiles.length) return showToast("Select files", "error");
+
+    const btn = document.getElementById('btn-send');
+    btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="lucide-spin"></i> Processing...'; lucide.createIcons();
+
+    const code = generateId();
+    let contentValue = "";
+
+    try {
+        if (!isText) {
+            const uploadPromises = selectedFiles.map(file => {
+                const fileName = `${code}-${Math.random().toString(36).substring(7)}-${file.name.replace(/\s/g, '_')}`;
+                return db.storage.from('uploads').upload(fileName, file).then(() => fileName);
+            });
+            const paths = await Promise.all(uploadPromises);
+            contentValue = JSON.stringify(paths);
+        } else {
+            contentValue = textVal;
+        }
+
+        const { error } = await db.from('clips').insert([{ code: code, content: contentValue, type: isText ? 'text' : 'file', created_at: new Date().toISOString() }]);
+        if (error) throw error;
+        
+        playSuccessSound();
+        showSuccessState(code, contentValue, isText ? 'text' : 'file');
+    } catch (e) {
+        showToast("Error uploading", "error");
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="zap"></i> Generate Secure Transfer Code'; lucide.createIcons();
+    }
+}
+
+function showSuccessState(code, content, type) {
+    document.getElementById('send-entry').style.display = 'none';
+    document.getElementById('send-success').style.display = 'block';
+    document.getElementById('generated-code').textContent = code;
+    const shareUrl = `${window.location.origin}/#retrieve?code=${code}`;
+
+    const qrContainer = document.getElementById('qrcode-container');
+    qrContainer.innerHTML = '';
+    new QRCode(qrContainer, { text: shareUrl, width: 180, height: 180, colorDark: "#09090b", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+
+    setTimeout(() => {
+        const canvas = qrContainer.querySelector('canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            const logo = new Image();
+            logo.crossOrigin = "anonymous";
+            logo.src = "https://copycloud.me/logo.png";
+            logo.onload = () => {
+                const logoSize = 46;
+                const x = (180 - logoSize) / 2;
+                const y = (180 - logoSize) / 2;
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(x - 4, y - 4, logoSize + 8, logoSize + 8);
+                ctx.drawImage(logo, x, y, logoSize, logoSize);
+            };
+        }
+    }, 100);
+
+    addToHistory(code, 'send', { preview: type === 'text' ? content.substring(0, 30) : 'Files' });
+}
+
+function resetSend() {
+    document.getElementById('send-entry').style.display = 'block';
+    document.getElementById('send-success').style.display = 'none';
+    document.getElementById('btn-send').disabled = false;
+    document.getElementById('btn-send').innerHTML = '<i data-lucide="zap"></i> Generate Secure Transfer Code';
+    clearText();
+    clearFiles({stopPropagation:()=>{}});
+    lucide.createIcons();
+}
+
+function copyCode() {
+    const code = document.getElementById('generated-code').textContent;
+    const url = `${window.location.origin}/#retrieve?code=${code}`;
+    const t = document.createElement("textarea"); t.value = url; document.body.appendChild(t); t.select();
+    document.execCommand('copy'); document.body.removeChild(t);
+    showToast("Link Copied!", "success");
+}
+
+async function initRetrieve() {
+    const code = document.getElementById('retrieve-code-input').value.toUpperCase().trim();
+    if (code.length < 4) return showToast("Enter a valid code.", "error");
+
+    const btn = document.getElementById('btn-retrieve');
+    btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="lucide-spin"></i> Searching...'; lucide.createIcons();
+
+    try {
+        const { data, error } = await db.from('clips').select('*').eq('code', code).single();
+        if (error || !data) { showToast("Code not found or expired.", "error"); }
+        else {
+            playSuccessSound();
+            displayRetrieveResult(data, code);
+            showToast("Content found!", "success");
+        }
+    } catch (e) {
+        showToast("Error retrieving", "error");
+    } finally {
+        btn.disabled = false; btn.innerHTML = '<i data-lucide="search"></i> Search Secure Cloud'; lucide.createIcons();
+    }
+}
+
+function displayRetrieveResult(data, code) {
+    currentRetrievedData = data;
+    document.getElementById('retrieve-entry').style.display = 'none';
+    document.getElementById('retrieve-result').style.display = 'block';
+    document.getElementById('res-type').textContent = data.type;
+
+    if (data.type === 'text') {
+        document.getElementById('res-text-container').style.display = 'block';
+        document.getElementById('res-file-container').style.display = 'none';
+        document.getElementById('res-md').innerHTML = marked.parse(data.content);
+    } else {
+        document.getElementById('res-text-container').style.display = 'none';
+        document.getElementById('res-file-container').style.display = 'block';
+        let paths = JSON.parse(data.content);
+        const list = document.getElementById('res-files');
+        list.innerHTML = paths.map(p => {
+            const name = p.split('-').slice(2).join('-') || p;
+            const { data: fd } = db.storage.from('uploads').getPublicUrl(p);
+            return `<div class="file-item"><span>${name}</span><a href="${fd.publicUrl}" target="_blank" class="btn-secondary">Get</a></div>`;
+        }).join('');
+    }
+    lucide.createIcons();
+    addToHistory(code, 'retrieve', { preview: data.type === 'text' ? data.content.substring(0, 30) : 'Files' });
+}
+
+function resetRetrieve() {
+    document.getElementById('retrieve-entry').style.display = 'block';
+    document.getElementById('retrieve-result').style.display = 'none';
+}
+
+function copyRetrievedText() {
+    if(currentRetrievedData) {
+        const t = document.createElement("textarea"); t.value = currentRetrievedData.content; document.body.appendChild(t); t.select();
+        document.execCommand('copy'); document.body.removeChild(t);
+        showToast("Copied!", "success");
+    }
+}
+
+function generateId() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let res = '';
+    for (let i = 0; i < 6; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+    return res;
+}
+
+function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    document.getElementById('toast-msg').textContent = msg;
+    t.style.borderColor = type === 'error' ? '#ef4444' : 'var(--glass-border)';
+    lucide.createIcons();
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function addToHistory(code, type, extra) {
+    let hist = JSON.parse(localStorage.getItem('cc_hist') || '[]');
+    hist = hist.filter(h => h.code !== code);
+    hist.unshift({ code, type, ...extra, ts: Date.now() });
+    localStorage.setItem('cc_hist', JSON.stringify(hist.slice(0, 10)));
+}
+
+function renderHistory() {
+    const hist = JSON.parse(localStorage.getItem('cc_hist') || '[]');
+    const list = document.getElementById('history-list');
+    const empty = document.getElementById('history-empty');
+    if (hist.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; }
+    else {
+        empty.style.display = 'none';
+        list.innerHTML = hist.map(h => `
+            <div class="history-item" onclick="switchTab('retrieve'); document.getElementById('retrieve-code-input').value='${h.code}'; initRetrieve();">
+                <div><div style="font-weight:700; color:var(--accent-primary);">${h.code}</div><div style="font-size:12px; color:var(--text-muted);">${h.preview}</div></div>
+                <div class="btn-secondary">View</div>
+            </div>
+        `).join('');
+    }
+    lucide.createIcons();
+}
+
+function clearHistory() {
+    localStorage.removeItem('cc_hist');
+    renderHistory();
+    showToast("History cleared", "success");
+}
+
+/* --- Fixed Q&A Chatbot Logic --- */
+const FIXED_QA = {
+    'how': "Paste text or upload files in the **Send** tab. Click 'Generate Code' to get a unique 6-digit PIN. Enter this PIN in the **Retrieve** tab on any other device to access your data instantly.",
+    'security': "Copy Cloud uses industry-standard **AES-GCM encryption**. We do not require accounts, logins, or emails, making the transfer 100% anonymous. Content is deleted forever after 24 hours.",
+    'limits': "You can share text snippets of any length. For files, we support up to **40MB per transfer** through our cloud. Larger peer-to-peer transfers are planned for the next major update.",
+    'other': "We offer a suite of free developer tools including:\n- **Base64** Encoding/Decoding\n- **JSON** Formatting\n- **Hash** (SHA256) Generation\n- **QR Code** Generation\n- **UUID** Generation\n- **Diff** Checker\nCheck our GitHub for the full tool list!",
+    'roadmap': "**Next on our Roadmap:**\n- Client-side End-to-End Encryption (E2EE)\n- Chrome & Firefox Browser Extensions\n- Dedicated Desktop Apps for Windows & Mac\n- Direct P2P transfers for files >1GB"
+};
+
+function toggleChat() {
+    playPopSound(); 
+    const win = document.getElementById('chat-window');
+    win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+    if(win.style.display === 'flex') {
+        document.getElementById('chat-input').focus();
+        lucide.createIcons();
+    }
+}
+
+function askQuick(key) {
+    const msgContainer = document.getElementById('chat-messages');
+    const questions = {
+        'how': 'How it works?',
+        'security': 'Is it secure?',
+        'limits': 'File limits?',
+        'other': 'Other tools?',
+        'roadmap': 'Roadmap?'
+    };
+    
+    msgContainer.innerHTML += `<div class="chat-msg msg-user">${questions[key]}</div>`;
+    
+    setTimeout(() => {
+        msgContainer.innerHTML += `<div class="chat-msg msg-ai">${marked.parse(FIXED_QA[key])}</div>`;
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+        lucide.createIcons();
+    }, 300);
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.toLowerCase().trim();
+    if(!text) return;
+
+    const msgContainer = document.getElementById('chat-messages');
+    msgContainer.innerHTML += `<div class="chat-msg msg-user">${input.value}</div>`;
+    input.value = '';
+
+    let response = "I'm not sure about that. Try one of the quick buttons above!";
+    
+    if(text.includes('how') || text.includes('work')) response = FIXED_QA.how;
+    else if(text.includes('safe') || text.includes('secure') || text.includes('privacy')) response = FIXED_QA.security;
+    else if(text.includes('size') || text.includes('limit') || text.includes('large')) response = FIXED_QA.limits;
+    else if(text.includes('tool') || text.includes('other')) response = FIXED_QA.other;
+    else if(text.includes('next') || text.includes('roadmap') || text.includes('update')) response = FIXED_QA.roadmap;
+
+    setTimeout(() => {
+        msgContainer.innerHTML += `<div class="chat-msg msg-ai">${marked.parse(response)}</div>`;
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+        lucide.createIcons();
+    }, 300);
+}
+
+document.addEventListener('mousemove', (e) => {
+    const wrap = document.getElementById('blob-wrap');
+    const x = (e.clientX / window.innerWidth - 0.5) * 40; 
+    const y = (e.clientY / window.innerHeight - 0.5) * 40;
+    if(wrap) wrap.style.transform = `translate(${-x}px, ${-y}px)`;
+});
+</script>
+</body>
+</html>

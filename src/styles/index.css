@@ -1,0 +1,19 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Bug 2 fix: prevent horizontal overflow at any viewport width. */
+html, body, #root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Responsive code-cell tokens shared by SendTab success view + RetrieveTab OTP. */
+:root {
+  --cc-code-cell-w: clamp(38px, 12.5vw, 52px);
+  --cc-code-cell-h: clamp(48px, 15vw, 62px);
+  --cc-code-cell-font: clamp(1.15rem, 4.5vw, 1.65rem);
+  --cc-code-cell-gap: clamp(4px, 1.6vw, 10px);
+  --cc-panel-pad-y: clamp(20px, 5vw, 40px);
+  --cc-panel-pad-x: clamp(14px, 4.5vw, 36px);
+}
