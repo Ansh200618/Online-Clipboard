@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
@@ -166,13 +166,30 @@ export function SendTab() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const totalSize = files.reduce((a, f) => a + f.size, 0);
 
+  const mergeFiles = useCallback((nextFiles: File[]) => {
+    setFiles((prev) => {
+      const merged = [...prev];
+      for (const file of nextFiles) {
+        const exists = merged.some(
+          (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+        );
+        if (!exists) merged.push(file);
+      }
+      return merged;
+    });
+  }, []);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setIsDragging(false);
-    setFiles(Array.from(e.dataTransfer.files));
-  }, []);
+    mergeFiles(Array.from(e.dataTransfer.files));
+  }, [mergeFiles]);
+
+  const previewUrl = useMemo(() => (previewFile ? URL.createObjectURL(previewFile) : ""), [previewFile]);
+  useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   const handleSend = async () => {
     if (sendType === "text" && !text.trim()) return toast.error("Enter some text.");
@@ -327,14 +344,40 @@ export function SendTab() {
                           </div>
                           <span style={{ flex: 1, color: "#e2e8f0", fontSize: "0.82rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
                           <span style={{ color: "#334155", fontSize: "0.72rem" }}>{formatFileSize(f.size)}</span>
+                          <button onClick={() => setPreviewFile(f)} style={{ background: "none", border: "none", color: "#818cf8", cursor: "pointer", padding: 2 }}><FileText size={13} /></button>
                           <button onClick={() => setFiles(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#334155", cursor: "pointer", padding: 2 }}><X size={13} /></button>
                         </div>
                       );
                     })}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                      style={{
+                        alignSelf: "flex-start",
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        background: "rgba(99,102,241,0.12)",
+                        border: "1px solid rgba(99,102,241,0.28)",
+                        color: "#a5b4fc",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      + Add more files
+                    </button>
                   </div>
                 )}
               </div>
-              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  mergeFiles(Array.from(e.target.files || []));
+                  e.currentTarget.value = "";
+                }}
+              />
             </motion.div>
           )}
 
@@ -366,6 +409,33 @@ export function SendTab() {
         <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
           {successData && <SuccessView data={successData} onReset={handleReset} />}
         </motion.div>
+      )}
+      {previewFile && (
+        <div
+          onClick={() => setPreviewFile(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <button onClick={() => setPreviewFile(null)} style={{ position: "absolute", top: 20, right: 20, width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X size={18} />
+          </button>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(960px, 92vw)", maxHeight: "88vh", display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12 }}>
+            {previewFile.type.startsWith("image/") ? (
+              <img src={previewUrl} alt={previewFile.name} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 12 }} />
+            ) : previewFile.type.startsWith("video/") ? (
+              <video src={previewUrl} controls autoPlay style={{ width: "100%", maxHeight: "80vh", borderRadius: 12, background: "#000" }} />
+            ) : previewFile.type.startsWith("audio/") ? (
+              <audio src={previewUrl} controls style={{ width: "100%" }} />
+            ) : (
+              <iframe src={previewUrl} title={previewFile.name} style={{ width: "100%", height: "70vh", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)", background: "#0b1020" }} />
+            )}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <span style={{ color: "#cbd5e1", fontSize: "0.85rem", fontFamily: "'JetBrains Mono', monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{previewFile.name}</span>
+              <a href={previewUrl} download={previewFile.name} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 12px", borderRadius: 8, background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", color: "#818cf8", fontSize: "0.78rem", fontWeight: 600, textDecoration: "none" }}>
+                <Upload size={12} /> Download
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </AnimatePresence>
   );
